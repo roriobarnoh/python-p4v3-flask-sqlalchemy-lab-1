@@ -23,7 +23,7 @@ def index():
 # Add views here
 @app.route('/earthquakes/<int:id>')
 def get_eartquake(id):
-    earthquake = Earthquake.query.get(id)
+    earthquake = db.session.get(Earthquake, id)
     if earthquake:
         body = {
             'id': earthquake.id,
@@ -37,8 +37,12 @@ def get_eartquake(id):
         return make_response(jsonify(error_message), 404)
     
 
-@app.route('/earthquakes/magnitude/"float:magnitude')
+@app.route('/earthquakes/magnitude/<magnitude>')
 def get_eartquake_by_magnitude(magnitude):
+    try:
+        magnitude = float(magnitude)
+    except ValueError:
+        return make_response(jsonify({'message': 'Invalid magnitude value.'}), 400)
     earthquake = Earthquake.query.filter(Earthquake.magnitude >= magnitude).all()
     
     quakes_data = [
@@ -49,8 +53,12 @@ def get_eartquake_by_magnitude(magnitude):
             'year': quake.year
         }
         for quake in earthquake
-    ]
-    return make_response(jsonify(quakes_data), 200) if earthquake else make_response(jsonify({'message': 'No earthquakes found with that magnitude.'}), 404)
+    ] 
+    return jsonify({
+        'count':  len(quakes_data),
+        'quakes': quakes_data
+    }), 200
+
 
 
 if __name__ == '__main__':
